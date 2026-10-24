@@ -19,6 +19,54 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Create mock google-services.json
+        run: |
+          mkdir -p app
+          cat << 'EOF' > app/google-services.json
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "mock-app",
+              "storage_bucket": "mock-app.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                  "android_client_info": {
+                    "package_name": "com.example.app"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  {
+                    "current_key": "fake_api_key_placeholder"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
+      - name: Create default debug keystore
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -v \
+            -keystore ~/.android/debug.keystore \
+            -alias androiddebugkey \
+            -keypass android \
+            -storepass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Generate Gradle Wrapper
         run: gradle wrapper
 
@@ -26,10 +74,11 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: '**/build/outputs/apk/debug/*.apk'
+          
