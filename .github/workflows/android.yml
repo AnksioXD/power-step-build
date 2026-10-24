@@ -1,10 +1,8 @@
-name: Android Zip Build CI
+name: Build Android APK
 
 on:
-  # Triggers the build automatically on every push to the main branch
   push:
-    branches: [ "main" ]
-  # Allows you to manually trigger the build from the GitHub UI
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
@@ -12,29 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Downloads the repository source code onto the runner machine
-    - name: Checkout Source Code
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    # 2. Sets up the correct Java environment required by Gradle
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-        cache: 'gradle' # Speeds up future builds by caching dependencies
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    # 3. Makes sure the Linux environment can run the Gradle wrapper script
-    - name: Grant Execute Permission for Gradlew
-      run: chmod +x gradlew
+      - name: Generate Gradle Wrapper
+        run: gradle wrapper
 
-    # 4. Compiles the source files into a debug APK
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    # 5. Saves the final APK as a downloadable zip file on the GitHub UI
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-app-debug
-        path: app/build/outputs/apk/debug/*.apk
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: '**/build/outputs/apk/debug/*.apk'
